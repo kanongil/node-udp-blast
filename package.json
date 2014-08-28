@@ -1,0 +1,35 @@
+{
+  "name": "udp-blast",
+  "version": "1.0.0",
+  "description": "Packetize and stream to target ip/port using UDP.",
+  "main": "udpblast.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "streams2",
+    "udp",
+    "writable",
+    "streaming",
+    "network"
+  ],
+  "author": "Gil Pedersen <gpdev@gpost.dk>",
+  "license": "BSD",
+  "dependencies": {
+    "bl": "^0.9.1",
+    "ipaddr.js": "^0.1.3",
+    "readable-stream": "^1.0.31"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kanongil/node-udp-blast.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kanongil/node-udp-blast/issues"
+  },
+  "homepage": "https://github.com/kanongil/node-udp-blast"
+}
