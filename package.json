@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "lab -c"
   },
   "keywords": [
     "streams2",
@@ -23,7 +23,10 @@
     "ipaddr.js": "^0.1.3",
     "readable-stream": "^1.0.31"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "lab": "^4.2.0",
+    "proxyquire": "^1.0.1"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/kanongil/node-udp-blast.git"

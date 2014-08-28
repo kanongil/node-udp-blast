@@ -11,6 +11,8 @@ var BufferList = require('bl'),
     Writable = require('readable-stream/writable');
 
 function UdpBlast(dst, options) {
+  dst = dst || 1234;
+
   if (typeof dst === 'number')
     dst = { port:dst, host:'localhost' };
 
@@ -48,21 +50,25 @@ UdpBlast.prototype._write = function(chunk, encoding, cb) {
 
       self.client = Dgram.createSocket(family === 6 ? 'udp6' : 'udp4');
 
-      if (self.ttl) {
-        if (addr.range() === 'multicast')
-          self.client.setMulticastTTL(self.ttl);
-        else
-          self.client.setTTL(self.ttl);
-      }
-
       self.client.bind(null, function(err) {
         if (err) return cb(err);
  
         self.once('finish', function() {
-          this.client.close();
+          // this delays the final processing until after the 'finish' callback has been emitted
+          // should be ok'ish, as the Transform module does the same for async _flush()'es
+          self._write(null, null, function() {
+            self.client.close();
+          });
         });
 
         if (!mcast) self.client.setBroadcast(true);
+
+        if (self.ttl) {
+          if (mcast)
+            self.client.setMulticastTTL(self.ttl);
+          else
+            self.client.setTTL(self.ttl);
+        }
 
         // try again
         self._write(chunk, encoding, cb);
