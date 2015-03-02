@@ -43,11 +43,21 @@ describe('UdpBlast', function(){
       done();
     })
 
+    it('throws on invalid destinations', function(done) {
+      var create = function (dst) { return function() {
+        return new UdpBlast(dst);
+      }};
+      expect(create(true)).to.throw(TypeError);
+      expect(create('localhost')).to.throw(TypeError);
+      expect(create({})).to.throw(TypeError);
+      done();
+    })
+
   })
 
   describe('stream', function(){
 
-    it('bails on invalid addresses', function(done) {
+    it('bails on non-existent addresses', function(done) {
       var blaster = new UdpBlast({ host: 'this.does.not.exist', port: 1234 });
       new BufferList().append('test').pipe(blaster);
       blaster.on('error', function(err) {
@@ -57,7 +67,7 @@ describe('UdpBlast', function(){
     })
 
     it('handles a multicast ipv4 address', function(done) {
-      var blaster = new UdpBlast({ host: '224.20.54.121', port: 1234 }, { ttl: 1 });
+      var blaster = new UdpBlast({ host: '224.20.54.121', port: '1234' }, { ttl: 1 });
       new BufferList().append('test').pipe(blaster);
       blaster.on('close', done);
     })

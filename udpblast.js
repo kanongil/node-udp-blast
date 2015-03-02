@@ -14,7 +14,11 @@ function UdpBlast(dst, options) {
   dst = dst || 1234;
 
   if (typeof dst === 'number')
-    dst = { port:dst, host:'localhost' };
+    dst = { port: dst, host: 'localhost' };
+
+  dst.port = ~~dst.port;
+  if (typeof dst.host !== 'string')
+    throw new TypeError('host must be a string');
 
   options = options || {};
 
