@@ -9,7 +9,7 @@ var before = lab.before, after = lab.after;
 var expect = Code.expect;
 
 var Dgram = require('dgram'),
-    EventEmitter = require('events').EventEmitter;
+    Stream = require('stream');
 var BufferList = require('bl');
 
 var Proxyquire = require('proxyquire')
@@ -33,8 +33,8 @@ describe('UdpBlast', function(){
       done();
     })
 
-    it('shold be an EventEmitter', function(done) {
-      expect(new UdpBlast()).to.be.an.instanceof(EventEmitter);
+    it('is a Stream', function(done) {
+      expect(new UdpBlast()).to.be.an.instanceof(Stream);
       done();
     })
 
@@ -59,28 +59,20 @@ describe('UdpBlast', function(){
     it('handles a multicast ipv4 address', function(done) {
       var blaster = new UdpBlast({ host: '224.20.54.121', port: 1234 }, { ttl: 1 });
       new BufferList().append('test').pipe(blaster);
-      blaster.on('finish', done);
+      blaster.on('close', done);
     })
 
     it('handles an ipv6 address', function(done) {
       var blaster = new UdpBlast({ host: '127::1', port: 1234 });
-      new BufferList().append('test').pipe(blaster);
-      blaster.on('finish', done);
+      blaster.write('test');
+      blaster.end();
+      blaster.on('close', done);
     })
 
-    it('outputs valid udp datagrams', function(done) {
+    it('server receives correct udp datagrams', function(done) {
       var server = Dgram.createSocket('udp4');
       server.bind(0, 'localhost', function(err) {
         expect(err).to.not.exist();
-
-        var cnt = 0;
-
-        server.on('close', done);
-        server.on('message', function(data) {
-          var parts = ['bori', 'ng..', '.'];
-          expect(data.toString()).to.equal(parts[cnt]);
-          if (++cnt === 3) server.close();
-        });
 
         var blaster = new UdpBlast({ host: server.address().address, port: server.address().port }, { packetSize: 4, ttl: 1 });
         expect(blaster).to.exist();
@@ -88,6 +80,27 @@ describe('UdpBlast', function(){
         var bl = new BufferList();
         bl.append('boring...').end();
         bl.pipe(blaster);
+
+        var cnt = 0;
+        server.on('message', function(data) {
+          var parts = ['bori', 'ng..', '.'];
+          expect(data.toString()).to.equal(parts[cnt]);
+          if (++cnt === 3) {
+            server.on('close', done);
+            server.close();
+          }
+        });
+      });
+    })
+
+    it('handles immediate end', function(done) {
+      var server = Dgram.createSocket('udp4');
+      server.bind(0, 'localhost', function(err) {
+        expect(err).to.not.exist();
+
+        new UdpBlast({ host: server.address().address, port: server.address().port })
+          .on('close', done)
+          .end();
       });
     })
 

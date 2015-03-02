@@ -31,6 +31,20 @@ function UdpBlast(dst, options) {
   this.bl = new BufferList();
   this.client = null;
 
+  this.on('finish', function() {
+    var self = this;
+    process.nextTick(function() {
+      if (!self.client) // if we haven't even setup the client, just emit close
+        return self.emit('close');
+
+      // this delays the final processing until after the 'finish' callback has been emitted
+      // should be ok'ish, as the Transform module does the same for async _flush()'es
+      self._write(null, null, function() {
+        self.client.close();
+      });
+    });
+  });
+
   return this;
 }
 Util.inherits(UdpBlast, Writable);
@@ -49,17 +63,12 @@ UdpBlast.prototype._write = function(chunk, encoding, cb) {
       var mcast = (addr.range() === 'multicast');
 
       self.client = Dgram.createSocket(family === 6 ? 'udp6' : 'udp4');
+      self.client.on('close', function() {
+        self.emit('close');
+      });
 
       self.client.bind(null, function(err) {
         if (err) return cb(err);
-
-        self.once('finish', function() {
-          // this delays the final processing until after the 'finish' callback has been emitted
-          // should be ok'ish, as the Transform module does the same for async _flush()'es
-          self._write(null, null, function() {
-            self.client.close();
-          });
-        });
 
         if (!mcast) self.client.setBroadcast(true);
 
