@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "lab -c"
+    "test": "lab -a code -t 100"
   },
   "keywords": [
     "streams2",
