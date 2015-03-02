@@ -23,7 +23,7 @@ function UdpBlast(dst, options) {
   this.dst = {
     host: dst.host,
     port: ~~dst.port,
-    address: null,
+    address: null
   };
   this.ttl = ~~options.ttl;
   this.packetSize = ~~options.packetSize || 512;
@@ -52,7 +52,7 @@ UdpBlast.prototype._write = function(chunk, encoding, cb) {
 
       self.client.bind(null, function(err) {
         if (err) return cb(err);
- 
+
         self.once('finish', function() {
           // this delays the final processing until after the 'finish' callback has been emitted
           // should be ok'ish, as the Transform module does the same for async _flush()'es
