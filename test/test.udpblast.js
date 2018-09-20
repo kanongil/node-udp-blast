@@ -23,7 +23,7 @@ const { expect } = Code;
 
 const dnsStubs = {};
 const dgramStubs = {};
-const UdpBlast = Proxyquire('../udpblast', { dns: dnsStubs, dgram: dgramStubs });
+const UdpBlast = Proxyquire('..', { dns: dnsStubs, dgram: dgramStubs });
 
 
 describe('UdpBlast', () => {

@@ -2,7 +2,7 @@
   "name": "udp-blast",
   "version": "1.0.1",
   "description": "Packetize and stream to target ip/port using UDP.",
-  "main": "udpblast.js",
+  "main": "lib/udpblast.js",
   "directories": {
     "test": "test"
   },
