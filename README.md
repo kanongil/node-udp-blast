@@ -5,13 +5,13 @@ Writable stream that packetizes the input and streams it to the network using th
 ## Usage
 
 ```javascript
-var Fs = require('fs');
-var UdpBlast = require('udp-blast');
+const Fs = require('fs');
+const UdpBlast = require('udp-blast');
 
-var dst = { host: 'localhost', port: 1234 };
-var options = { packetSize: 1024 };
+const dst = { host: 'localhost', port: 1234 };
+const options = { packetSize: 1024 };
 
-var blaster = new UdpBlast(dst, options);
+const blaster = new UdpBlast(dst, options);
 
 // blast as fast as possible
 Fs.createReadStream(…).pipe(blaster);
@@ -41,7 +41,7 @@ $ npm install udp-blast
 # License
 (BSD 2-Clause License)
 
-Copyright (c) 2014, Gil Pedersen &lt;gpdev@gpost.dk&gt;  
+Copyright (c) 2014-2018, Gil Pedersen &lt;gpdev@gpost.dk&gt;  
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 
