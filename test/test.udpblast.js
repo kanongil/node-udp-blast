@@ -1,176 +1,228 @@
-/* jshint node:true */
+'use strict';
 
-var Code = require('code'),
-  Lab = require('lab');
-var lab = exports.lab = Lab.script();
+const Dgram = require('dgram');
+const Stream = require('stream');
 
-var describe = lab.describe, it = lab.it;
-var before = lab.before, after = lab.after;
-var expect = Code.expect;
+const BufferList = require('bl');
+const Code = require('code');
+const Lab = require('lab');
+const Proxyquire = require('proxyquire');
 
-var Dgram = require('dgram'),
-    Stream = require('stream');
-var BufferList = require('bl');
 
-var Proxyquire = require('proxyquire')
+// Declare internals
 
-var dnsStubs = {}, dgramStubs = {};
-var UdpBlast = Proxyquire('../udpblast', { dns: dnsStubs, dgram: dgramStubs });
+const internals = {};
 
-describe('UdpBlast', function(){
 
-  describe('#new', function(){
+// Test shortcuts
 
-    it('accepts empty argument list', function(done){
-      expect(new UdpBlast).to.be.an.instanceof(UdpBlast);
-      done();
-    })
+const lab = exports.lab = Lab.script();
+const { describe, it, before, after } = lab;
+const { expect } = Code;
 
-    it('stores option properties', function(done) {
-      expect(new UdpBlast(null, { ttl: 42 })).to.include({ ttl: 42 });
-      expect(new UdpBlast(null, { packetSize: 42 })).to.include({ packetSize: 42 });
-      expect(new UdpBlast(null, { highWaterMark: 42 })._writableState).to.include({ highWaterMark: 42 });
-      done();
-    })
 
-    it('is a Stream', function(done) {
-      expect(new UdpBlast()).to.be.an.instanceof(Stream);
-      done();
-    })
+const dnsStubs = {};
+const dgramStubs = {};
+const UdpBlast = Proxyquire('../udpblast', { dns: dnsStubs, dgram: dgramStubs });
 
-    it('handles port number destination', function(done) {
-      expect(new UdpBlast(1234).dst).to.include({ host: 'localhost', port: 1234 });
-      done();
-    })
 
-    it('throws on invalid destinations', function(done) {
-      var create = function (dst) { return function() {
-        return new UdpBlast(dst);
-      }};
-      expect(create(true)).to.throw(TypeError);
-      expect(create('localhost')).to.throw(TypeError);
-      expect(create({})).to.throw(TypeError);
-      done();
-    })
+describe('UdpBlast', () => {
 
-  })
+    const ended = (stream) => {
 
-  describe('stream', function(){
+        return new Promise((resolve, reject) => {
 
-    it('bails on non-existent addresses', function(done) {
-      var blaster = new UdpBlast({ host: 'this.does.not.exist', port: 1234 });
-      new BufferList().append('test').pipe(blaster);
-      blaster.on('error', function(err) {
-        expect(err).to.be.an.instanceof(Error);
-        done();
-      });
-    })
-
-    it('handles a multicast ipv4 address', function(done) {
-      var blaster = new UdpBlast({ host: '224.20.54.121', port: '1234' }, { ttl: 1 });
-      new BufferList().append('test').pipe(blaster);
-      blaster.on('close', done);
-    })
-
-    it('handles an ipv6 address', function(done) {
-      var blaster = new UdpBlast({ host: '127::1', port: 1234 });
-      blaster.write('test');
-      blaster.end();
-      blaster.on('close', done);
-    })
-
-    it('server receives correct udp datagrams', function(done) {
-      var server = Dgram.createSocket('udp4');
-      server.bind(0, 'localhost', function(err) {
-        expect(err).to.not.exist();
-
-        var blaster = new UdpBlast({ host: server.address().address, port: server.address().port }, { packetSize: 4, ttl: 1 });
-        expect(blaster).to.exist();
-
-        var bl = new BufferList();
-        bl.append('boring...').end();
-        bl.pipe(blaster);
-
-        var cnt = 0;
-        server.on('message', function(data) {
-          var parts = ['bori', 'ng..', '.'];
-          expect(data.toString()).to.equal(parts[cnt]);
-          if (++cnt === 3) {
-            server.on('close', done);
-            server.close();
-          }
+            stream.on('close', resolve);
+            stream.on('error', reject);
         });
-      });
-    })
+    };
 
-    it('handles immediate end', function(done) {
-      var server = Dgram.createSocket('udp4');
-      server.bind(0, 'localhost', function(err) {
-        expect(err).to.not.exist();
+    describe('#constructor()', () => {
 
-        new UdpBlast({ host: server.address().address, port: server.address().port })
-          .on('close', done)
-          .end();
-      });
-    })
+        it('accepts empty argument list', (done) => {
 
-  })
+            expect(new UdpBlast()).to.be.an.instanceof(UdpBlast);
+        });
 
-  describe('dns stubs', function(){
+        it('stores option properties', (done) => {
 
-    before(function(done){
-      dnsStubs.lookup = function(host, callback) {
-        callback(null, 'abc.def', 16);
-      };
-      done();
-    })
+            expect(new UdpBlast(null, { ttl: 42 })).to.include({ ttl: 42 });
+            expect(new UdpBlast(null, { packetSize: 42 })).to.include({ packetSize: 42 });
+            expect(new UdpBlast(null, { highWaterMark: 42 })._writableState).to.include({ highWaterMark: 42 });
+        });
 
-    after(function(done){
-      var dns = require('dns');
-      dnsStubs.lookup = dns.lookup.bind(dns);
-      done();
-    })
+        it('is a Stream', (done) => {
 
-    it('bails on unknown families', function(done) {
-      var blaster = new UdpBlast();
-      new BufferList().append('test').pipe(blaster);
-      blaster.on('error', function(err) {
-        expect(err).to.be.an.instanceof(Error);
-        done();
-      });
-    })
+            expect(new UdpBlast()).to.be.an.instanceof(Stream);
+        });
 
-  })
+        it('handles port number destination', (done) => {
 
-  describe('dgram stubs', function(){
+            expect(new UdpBlast(1234).dst).to.include({ host: 'localhost', port: 1234 });
+        });
 
-    before(function(done){
-      dgramStubs.createSocket = function() {
-        var socket = Dgram.createSocket.apply(this, arguments);
-        socket.bind = function(arg1, arg2, callback) {
-          if (typeof arg1 === 'function') callback = arg1;
-          else if (typeof arg2 === 'function') callback = arg2;
-          callback(new Error('unknown bind error'));
-        };
-        return socket;
-      };
-      done();
-    })
+        it('throws on invalid destinations', (done) => {
 
-    after(function(done){
-      dgramStubs.createSocket = Dgram.createSocket.bind(Dgram);
-      done();
-    })
+            const create = function (dst) {
 
-    it('bails on local bind errors', function(done) {
-      var blaster = new UdpBlast();
-      new BufferList().append('test').pipe(blaster);
-      blaster.on('error', function(err) {
-        expect(err).to.be.an.instanceof(Error);
-        done();
-      });
-    })
+                return function () {
 
-  })
+                    return new UdpBlast(dst);
+                };
+            };
 
-})
+            expect(create(true)).to.throw(TypeError);
+            expect(create('localhost')).to.throw(TypeError);
+            expect(create({})).to.throw(TypeError);
+        });
+    });
+
+    describe('stream', () => {
+
+        it('bails on non-existent addresses', async () => {
+
+            const blaster = new UdpBlast({ host: 'this.does.not.exist', port: 1234 });
+
+            new BufferList().append('test').pipe(blaster);
+
+            await expect(ended(blaster)).to.reject(Error);
+        });
+
+        it('handles a multicast ipv4 address', async () => {
+
+            const blaster = new UdpBlast({ host: '224.20.54.121', port: '1234' }, { ttl: 1 });
+            new BufferList().append('test').pipe(blaster);
+            await ended(blaster);
+        });
+
+        it('handles an ipv6 address', async () => {
+
+            const blaster = new UdpBlast({ host: '127::1', port: 1234 });
+            blaster.write('test');
+            blaster.end();
+            await ended(blaster);
+        });
+
+        it('server receives correct udp datagrams', async () => {
+
+            const  server = Dgram.createSocket('udp4');
+
+            const deferred = {};
+            const promise = new Promise((resolve, reject) => {
+
+                deferred.resolve = resolve;
+                deferred.reject = reject;
+            });
+
+            server.bind(0, 'localhost', (err) => {
+
+                expect(err).to.not.exist();
+
+                const blaster = new UdpBlast({ host: server.address().address, port: server.address().port }, { packetSize: 4, ttl: 1 });
+                expect(blaster).to.exist();
+
+                const bl = new BufferList();
+                bl.append('boring...').end();
+                bl.pipe(blaster);
+
+                let cnt = 0;
+                server.on('message', (data) => {
+
+                    const parts = ['bori', 'ng..', '.'];
+                    expect(data.toString()).to.equal(parts[cnt]);
+                    if (++cnt === 3) {
+                        server.on('close', deferred.resolve);
+                        server.close();
+                    }
+                });
+            });
+
+            await promise;
+        });
+
+        it('handles immediate end', async () => {
+
+            const server = Dgram.createSocket('udp4');
+
+            const deferred = {};
+            const promise = new Promise((resolve, reject) => {
+
+                deferred.resolve = resolve;
+                deferred.reject = reject;
+            });
+
+            server.bind(0, 'localhost', (err) => {
+
+                expect(err).to.not.exist();
+
+                new UdpBlast({ host: server.address().address, port: server.address().port })
+                    .on('error', deferred.reject)
+                    .on('close', deferred.resolve)
+                    .end();
+            });
+
+            await promise;
+        });
+    });
+
+    describe('dns stubs', () => {
+
+        before(() => {
+
+            dnsStubs.lookup = function (host, callback) {
+
+                callback(null, 'abc.def', 16);
+            };
+        });
+
+        after(() => {
+
+            const dns = require('dns');
+
+            dnsStubs.lookup = dns.lookup.bind(dns);
+        });
+
+        it('bails on unknown families', async () => {
+
+            const blaster = new UdpBlast();
+            new BufferList().append('test').pipe(blaster);
+            await expect(ended(blaster)).to.reject(Error);
+        });
+    });
+
+    describe('dgram stubs', () => {
+
+        before(() => {
+
+            dgramStubs.createSocket = function (...args) {
+
+                const socket = Dgram.createSocket.apply(this, args);
+                socket.bind = function (arg1, arg2, callback) {
+
+                    if (typeof arg1 === 'function') {
+                        callback = arg1;
+                    }
+                    else if (typeof arg2 === 'function') {
+                        callback = arg2;
+                    }
+
+                    callback(new Error('unknown bind error'));
+                };
+
+                return socket;
+            };
+        });
+
+        after(() => {
+
+            dgramStubs.createSocket = Dgram.createSocket.bind(Dgram);
+        });
+
+        it('bails on local bind errors', async () => {
+
+            const blaster = new UdpBlast();
+            new BufferList().append('test').pipe(blaster);
+            await expect(ended(blaster)).to.reject(Error);
+        });
+    });
+});
