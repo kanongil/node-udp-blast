@@ -11,7 +11,10 @@ const Proxyquire = require('proxyquire');
 
 // Declare internals
 
-const internals = {};
+const internals = {
+    dnsStubs: {},
+    dgramStubs: {}
+};
 
 
 // Test shortcuts
@@ -21,9 +24,7 @@ const { describe, it, before, after } = lab;
 const { expect } = Code;
 
 
-const dnsStubs = {};
-const dgramStubs = {};
-const UdpBlast = Proxyquire('..', { dns: dnsStubs, dgram: dgramStubs });
+const UdpBlast = Proxyquire('..', { dns: internals.dnsStubs, dgram: internals.dgramStubs });
 
 
 describe('UdpBlast', () => {
@@ -169,7 +170,7 @@ describe('UdpBlast', () => {
 
         before(() => {
 
-            dnsStubs.lookup = function (host, callback) {
+            internals.dnsStubs.lookup = function (host, callback) {
 
                 callback(null, 'abc.def', 16);
             };
@@ -179,7 +180,7 @@ describe('UdpBlast', () => {
 
             const dns = require('dns');
 
-            dnsStubs.lookup = dns.lookup.bind(dns);
+            internals.dnsStubs.lookup = dns.lookup.bind(dns);
         });
 
         it('bails on unknown families', async () => {
@@ -194,7 +195,7 @@ describe('UdpBlast', () => {
 
         before(() => {
 
-            dgramStubs.createSocket = function (...args) {
+            internals.dgramStubs.createSocket = function (...args) {
 
                 const socket = Dgram.createSocket.apply(this, args);
                 socket.bind = function (arg1, arg2, callback) {
@@ -215,7 +216,7 @@ describe('UdpBlast', () => {
 
         after(() => {
 
-            dgramStubs.createSocket = Dgram.createSocket.bind(Dgram);
+            internals.dgramStubs.createSocket = Dgram.createSocket.bind(Dgram);
         });
 
         it('bails on local bind errors', async () => {
