@@ -3,9 +3,6 @@
   "version": "1.0.1",
   "description": "Packetize and stream to target ip/port using UDP.",
   "main": "lib/udpblast.js",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
     "test": "lab -a code -t 100 -L"
   },
@@ -17,7 +14,10 @@
     "network"
   ],
   "author": "Gil Pedersen <gpdev@gpost.dk>",
-  "license": "BSD",
+  "license": "BSD-2-Clause",
+  "engines": {
+    "node": ">=8.9.0"
+  },
   "dependencies": {
     "bl": "^0.9.1",
     "ipaddr.js": "^0.1.3",
