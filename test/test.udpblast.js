@@ -4,8 +4,8 @@ const Dgram = require('dgram');
 const Stream = require('stream');
 
 const BufferList = require('bl');
-const Code = require('code');
-const Lab = require('lab');
+const Code = require('@hapi/code');
+const Lab = require('@hapi/lab');
 const Proxyquire = require('proxyquire');
 
 
