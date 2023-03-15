@@ -1,7 +1,7 @@
 'use strict';
 
-const Dgram = require('dgram');
-const Stream = require('stream');
+const Dgram = require('node:dgram');
+const Stream = require('node:stream');
 
 const BufferList = require('bl');
 const Code = require('@hapi/code');
@@ -24,7 +24,7 @@ const { describe, it, before, after } = lab;
 const { expect } = Code;
 
 
-const UdpBlast = Proxyquire('..', { dns: internals.dnsStubs, dgram: internals.dgramStubs });
+const UdpBlast = Proxyquire('..', { 'node:dns': internals.dnsStubs, 'node:dgram': internals.dgramStubs });
 
 
 describe('UdpBlast', () => {
@@ -33,6 +33,7 @@ describe('UdpBlast', () => {
 
         return new Promise((resolve, reject) => {
 
+            stream.on('end', resolve);
             stream.on('close', resolve);
             stream.on('error', reject);
         });
@@ -178,7 +179,7 @@ describe('UdpBlast', () => {
 
         after(() => {
 
-            const dns = require('dns');
+            const dns = require('node:dns');
 
             internals.dnsStubs.lookup = dns.lookup.bind(dns);
         });
