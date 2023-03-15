@@ -6,7 +6,7 @@ Writable stream that packetizes the input and streams it to the network using th
 
 ```javascript
 const Fs = require('fs');
-const UdpBlast = require('udp-blast');
+const { UdpBlast } = require('udp-blast');
 
 const dst = { host: 'localhost', port: 1234 };
 const options = { packetSize: 1024 };
@@ -42,7 +42,7 @@ $ npm install udp-blast
 
 (BSD 2-Clause License)
 
-Copyright (c) 2014-2019, Gil Pedersen &lt;gpdev@gpost.dk&gt;  
+Copyright (c) 2014-2023, Gil Pedersen &lt;gpdev@gpost.dk&gt;  
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 

@@ -24,7 +24,7 @@ const { describe, it, before, after } = lab;
 const { expect } = Code;
 
 
-const UdpBlast = Proxyquire('..', { 'node:dns': internals.dnsStubs, 'node:dgram': internals.dgramStubs });
+const { UdpBlast } = Proxyquire('..', { 'node:dns': internals.dnsStubs, 'node:dgram': internals.dgramStubs });
 
 
 describe('UdpBlast', () => {
